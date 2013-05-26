@@ -2,11 +2,6 @@ from PIL import Image
 from operator import itemgetter
 
 
-class char_image():
-
-    def __init__(self, char, path='characters/'):
-        self.char = char
-        
 class solver():
 
     def __init__(self):
@@ -15,21 +10,7 @@ class solver():
         self.chars = {}
         for c, i in [(chars[n], imgs[n]) for n in range(len(chars))]:
             self.chars[c] = i
-
-    def create_img_profile(self, img):
-        profile = []
-        for y in range(img.size[1]):
-            p_y = 0
-            for x in range(img.size[0]):
-                p_y += img.getpixel((x,y))
-            profile.append(p_y)
-        return profile
-
-    def get_char_profiles(self):
-        self.profiles = {}
-        for c, i in self.chars.iteritems():
-            self.profiles[c] = self.create_img_profile(i)
-            
+       
 
     def get_blackwhite_img(self, origimg):
         black = 0
@@ -51,6 +32,7 @@ class solver():
                     newimg.putpixel((x,y), white)
 
         return newimg
+
 
     def find_character_bounds(self, img):
         inchar = False
@@ -79,23 +61,38 @@ class solver():
         return char_positions
 
 
-    def cmp_profiles(self, a, b):
-        diff = 0
-        for n in range(len(a)):
-            diff += a[n] - b[n]
-        return diff
-
     def create_single_char_imgs(self, img, char_positions):
         return [img.crop((c[0], 0, c[1], img.size[1])) for c in char_positions]
 
-    def determine_character(self, img):
-        img_profile = self.create_img_profile(img)
-        diff = 10000
-        char = ''
-        for c, p in self.profiles.iteritems():
-            if self.cmp_profiles(img_profile, p) < diff:
-                char = c
-        return c
+
+    def compare_image(self, charimg, img, position):
+
+        diff_pixels = 0.0
+        num_pixels = 0.0
+        
+        for x in range(charimg.size[0]):
+            for y in range(charimg.size[1]):
+                num_pixels += 1
+                if charimg.getpixel((x,y)) != img.getpixel((x + position[0],y)):
+                    diff_pixels += 1
+
+        return 1 - (diff_pixels / num_pixels)
+
+
+    def determine_character(self, img, position):
+        start = position[0]
+        end = position[1]
+        best_fit = ''
+        best_score = 0
+
+        for c, i in self.chars.iteritems():
+            score = self.compare_image(i, img, position)
+            if score > best_score:
+                #print c, "got score of", score, "for pos", position[0]
+                best_score = score
+                best_fit = c
+
+        return best_fit
 
 
     def write_single_char_imgs(self, imgs, prefix="charimg-"):
@@ -118,13 +115,19 @@ class solver():
         pass
 
 
+
+# 03699a.png 2eec07.png 44a250.png 6ba9ba.png 8955bc.png
+# 27213b.png 3daebc.png 5a4a58.png 6c5430.png 8b1a6c.png
+# 27e6f3.png 42190f.png 684dc1.png 74da1d.png d0e76d.png
+
 iname = "44a250.png"
 origimg = Image.open("captchas/" + iname)
 
 s = solver()
-s.get_char_profiles()
 bwimg = s.get_blackwhite_img(origimg)
 charpos = s.find_character_bounds(bwimg)
-scimgs = s.create_single_char_imgs(bwimg, charpos)
-for i in scimgs:
-    print s.determine_character(i)
+cap = ''
+for cp in charpos:
+    cap += s.determine_character(bwimg, cp)
+
+print cap
