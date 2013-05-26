@@ -1,5 +1,5 @@
-import httplib
-import urllib2
+import httplib, urllib2
+import simplecaptcha
 
 verbose = True
 
