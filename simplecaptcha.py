@@ -2,7 +2,7 @@ from PIL import Image
 from operator import itemgetter
 
 
-class solver():
+class captchasolver():
 
     def __init__(self):
         chars = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f']
@@ -116,19 +116,20 @@ class solver():
         img.save("sep.png")
 
     def solve_captcha(self, origimg):
-        bwimg = s.get_blackwhite_img(origimg)
-        charpos = s.find_character_bounds(bwimg)
+        bwimg = self.get_blackwhite_img(origimg)
+        charpos = self.find_character_bounds(bwimg)
         cap = ''
         for cp in charpos:
-            cap += s.determine_character(bwimg, cp)
+            cap += self.determine_character(bwimg, cp)
         return cap
+
 
 
 if __name__ == "__main__":
     test_imgs = ["03699a.png", "2eec07.png", "44a250.png", "6ba9ba.png", "8955bc.png",
                  "27213b.png", "3daebc.png", "5a4a58.png", "6c5430.png", "8b1a6c.png",
                  "27e6f3.png", "42190f.png", "684dc1.png", "74da1d.png", "d0e76d.png"]
-    s = solver()
+    s = captchasolver()
     failed = 0
 
     for f in test_imgs:
