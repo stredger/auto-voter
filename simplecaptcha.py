@@ -124,6 +124,10 @@ class captchasolver():
         return cap
 
 
+def solve_captcha(img):
+    s = captchasolver()
+    return s.solve_captcha(img)
+
 
 if __name__ == "__main__":
     test_imgs = ["03699a.png", "2eec07.png", "44a250.png", "6ba9ba.png", "8955bc.png",

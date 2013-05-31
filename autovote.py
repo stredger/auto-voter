@@ -1,4 +1,4 @@
-import httplib, urllib, urllib2
+import urllib, urllib2
 import simplecaptcha
 from PIL import Image
 from cStringIO import StringIO
@@ -14,71 +14,76 @@ class voter():
         self.user = user
         self.passwd = passwd
 
-    def request_resource(self, method, resource, formdata=None, extra_headers={}):
-        if verbose:
-                print "%s%s" % (self.host, resource),
-        connection = httplib.HTTPSConnection(self.host)
-        connection.request(method, resource, formdata, extra_headers)
-        response = connection.getresponse()
-        connection.close()
-        if verbose:
-                print "%s %s" % (response.status, response.reason)
-                
-        return response
-
-    def get_image(self, resource, extra_headers={}):
-        if verbose:
-                print "%s%s" % (self.host, resource),
-        request = urllib2.Request('http://%s%s' % (self.host, resource))
-        for key, val in extra_headers.iteritems():
-            request.add_header(key, val)
+    
+    def request_resource(self, resource, data={}, extra_headers={}):
+        if verbose: print "%s%s" % (self.host, resource),
+        data = urllib.urlencode(data)
+        request = urllib2.Request('http://%s%s' % (self.host, resource), data, extra_headers)
         resource = urllib2.urlopen(request)
-        if verbose:
-                print str(resource.getcode())
-        if resource.getcode() != 200:
-            return None
-        data = resource.read()
-        return StringIO(data)
+        if verbose: print str(resource.getcode())
+        return resource if resource.getcode() == 200 else None
 
 
     def login(self):
-        login_resource = self.request_resource('get', '/account/login')
-        print login_resource.getheaders()
-        print login_resource.read()
-        if login_resource.status != 200:
-            print "Failed to get login page\n%s %s" % (login_resource.status, login_resource.reason)
+        login_resource = self.request_resource('/account/login')
+        if login_resource is None:
+            print "Failed to get login page"
             return
-
-        login_cookie = login_resource.getheader('set-cookie')
+        heads = login_resource.info()
+        login_cookie = heads['set-cookie']
         http_headers = {'Cookie':login_cookie}
-        imgdata = self.get_image('/themes/default/script/Captcha.php', http_headers)
-
-        if imgdata is None:
+        img_resource = self.request_resource('/themes/default/script/Captcha.php', extra_headers=http_headers)
+        if img_resource is None:
             print "Failed to get captcha"
             return
-        
-        captcha = Image.open(imgdata)
+        # read img into a file like object
+        img_data = StringIO(img_resource.read())
+        captcha = Image.open(img_data)
         capsolver = simplecaptcha.captchasolver()
         cap = capsolver.solve_captcha(captcha)
-        loginparams = urllib.urlencode({'username':self.user, 'password':self.passwd, 'captcha':cap, 'submit':'Login'})
-        print loginparams
-        login_resource = self.request_resource('post', '/account/login', loginparams, http_headers)
-        vote_resource = self.request_resource('get', '/vote/', extra_headers=http_headers)
-        data = vote_resource.read()
-        headers = vote_resource.getheaders()
-        print headers
-        print data
+        login_params = {'username':self.user, 'password':self.passwd, 'captcha':cap, 'submit':'Login'}
+        login_resource = self.request_resource('/account/login', login_params, http_headers)
+        print login_resource.info()
 
 
 
 
 
-v = voter(t_user, t_passwd)
-v.login()
 
-# dat = urllib2.urlopen('http://www.wow-one.com/account/login')
-# reqs = dat.info()
-# print dat.getcode()
-# print reqs
-#dat = urllib2.Request('http://www.wow-one.com/themes/default/script/Captcha.php')
+#v = voter(t_user, t_passwd)
+#v.login()
 
+import requests
+
+s = requests.Session()
+s.get('https://www.wow-one.com/account/login')
+r = s.get('https://www.wow-one.com/themes/default/script/Captcha.php')
+captcha = Image.open(StringIO(r.content))
+cap = simplecaptcha.solve_captcha(captcha)
+formdata = {'username':t_user, 'password':t_passwd, 'captcha':cap, 'submit':'Login'}
+s.post('https://www.wow-one.com/account/login', data=formdata)
+r = s.get('https://www.wow-one.com/vote/')
+heads = {'Referer':'https://www.wow-one.com/vote/'}
+r = s.get('https://www.wow-one.com/vote/process/1', headers=heads)
+r = s.get('https://www.wow-one.com/vote/process/2', headers=heads)
+r = s.get('https://www.wow-one.com/vote/process/3', headers=heads)
+
+print r.request.headers
+print r.headers
+
+# r = requests.get('https://www.wow-one.com/account/login')
+# cookies = r.cookies
+# r = requests.get('https://www.wow-one.com/themes/default/script/Captcha.php', cookies=cookies)
+# captcha = Image.open(StringIO(r.content))
+# cap = simplecaptcha.solve_captcha(captcha)
+# formdata = {'username':t_user, 'password':t_passwd, 'captcha':cap, 'submit':'Login'}
+# r = requests.post('https://www.wow-one.com/account/login', data=formdata, cookies=cookies)
+# #print r.cookies
+# r = requests.get('https://www.wow-one.com/vote/', cookies=cookies)
+# #r = requests.get('https://www.wow-one.com/vote/process/1', cookies=cookies)
+# #r = requests.get('https://www.wow-one.com/vote/process/1', cookies=cookies)
+# #print r.status_code
+# #print requests.codes.ok
+# print r.text
+# r = requests.get('https://www.wow-one.com/vote/process/1', cookies=cookies)
+# print r.text
