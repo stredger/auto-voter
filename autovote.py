@@ -4,7 +4,7 @@ from PIL import Image
 from cStringIO import StringIO
 
 verbose = True
-t_user = 'ElectricEefe'
+t_user = 'NickJays'
 t_passwd = '444444'
 
 class voter():
@@ -22,7 +22,7 @@ class voter():
         cap = simplecaptcha.solve_captcha(captcha)
         formdata = {'username':self.user, 'password':self.passwd, 'captcha':cap, 'submit':'Login'}
         r = s.post('https://www.wow-one.com/account/login', data=formdata)
-        # check response to see if we logged in
+        # TODO: check response to see if we logged in
         self.loggedin = True
 
     def vote(self):
@@ -30,10 +30,13 @@ class voter():
             return
         s = self.session
         heads = {'Referer':'https://www.wow-one.com/vote/'}
-        # want to make sure 2, 1, 0 links remain in the reqs after
+        # TODO: make sure 3, 2, 1, 0 links remain in the reqs after
+        # get the vote page as we get a new cookie, and for each get after
+        r = s.get('https://www.wow-one.com/vote')
         r = s.get('https://www.wow-one.com/vote/process/1', headers=heads)
         r = s.get('https://www.wow-one.com/vote/process/2', headers=heads)
         r = s.get('https://www.wow-one.com/vote/process/3', headers=heads)
+
 
 v = voter(t_user, t_passwd)
 v.login()
