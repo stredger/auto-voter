@@ -22,7 +22,6 @@ class captchasolver():
         values = {}
         for i in range(256):
             values[i] = his[i]
-        #colour_masks = [x[0] for x in sorted(values.items(), key=itemgetter(1), reverse=True)[:5]]
         colour_mask = sorted(values.items(), key=itemgetter(1), reverse=True)[0][0]
 
         for y in range(origimg.size[1]):
@@ -124,11 +123,17 @@ class captchasolver():
         return cap
 
 
+# instantiate the captcha solver once
+solver = captchasolver()
+
 def solve_captcha(img):
-    s = captchasolver()
-    return s.solve_captcha(img)
+    return solver.solve_captcha(img)
 
 
+
+
+
+# For testing
 if __name__ == "__main__":
     test_imgs = ["03699a.png", "2eec07.png", "44a250.png", "6ba9ba.png", "8955bc.png",
                  "27213b.png", "3daebc.png", "5a4a58.png", "6c5430.png", "8b1a6c.png",
