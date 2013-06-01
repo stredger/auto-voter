@@ -1,18 +1,20 @@
 from PIL import Image
 from operator import itemgetter
+import os
 
+scriptpath = os.path.dirname(os.path.realpath(__file__))
 
 class captchasolver():
 
     def __init__(self):
         chars = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f']
-        imgs = [Image.open('characters/%s.png' % (c)) for c in chars]
+        imgs = [Image.open(os.path.join(scriptpath, 'characters/%s.png' % (c))) for c in chars]
         self.chars = {}
         for c, i in [(chars[n], imgs[n]) for n in range(len(chars))]:
             self.chars[c] = i
        
 
-    def get_blackwhite_img(self, origimg):
+    def get_blackwhite_img(self, origimg, save=False):
         black = 0
         white = 255
         # make an all black image
@@ -29,6 +31,9 @@ class captchasolver():
                 pix = origimg.getpixel((x,y))[0]
                 if pix == colour_mask:
                     newimg.putpixel((x,y), white)
+
+        if save:
+            newimg.save(os.path.join(scriptpath, "bw.png"))
 
         return newimg
 
@@ -101,7 +106,7 @@ class captchasolver():
     def write_single_char_imgs(self, imgs, prefix="charimg-"):
         count = 0
         for i in imgs:
-            i.save('%s%d.png' % (prefix, count))
+            i.save(os.path.join(scriptpath, '%s%d.png' % (prefix, count)))
             count += 1
 
     def write_separator_image(self, img, char_positions):
@@ -112,7 +117,7 @@ class captchasolver():
             x = i[1]
             for y in range(img.size[1]):
                 img.putpixel((x,y), 150)
-        img.save("sep.png")
+        img.save(os.path.join(scriptpath, "sep.png"))
 
     def solve_captcha(self, origimg):
         bwimg = self.get_blackwhite_img(origimg)

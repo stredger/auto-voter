@@ -1,9 +1,9 @@
-import requests
+import os, requests
 import simplecaptcha
 from PIL import Image
 from cStringIO import StringIO
 
-verbose = True
+verbose = True # TODO: add some debug output
 t_user = 'NickJays'
 t_passwd = '444444'
 
